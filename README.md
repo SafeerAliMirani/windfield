@@ -43,6 +43,10 @@ You need a WebGPU browser, so desktop Chrome or Edge.
 - Wind is measured 10 m above the ground and colored by speed up to about 20 m/s.
 - The map is a plain equirectangular projection centered on the Pacific.
 
+## Author
+
+Built by Safeer Ali Mirani ([GitHub](https://github.com/SafeerAliMirani)).
+
 ## License
 
 MIT. NOAA GFS and Natural Earth data are public domain.

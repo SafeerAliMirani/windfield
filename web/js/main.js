@@ -68,7 +68,7 @@ fn hash(n : u32) -> f32 {
   return f32(x) / 4294967295.0;
 }
 
-@compute @workgroup_size(64)
+@compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= P0.n) { return; }
@@ -392,7 +392,7 @@ async function main() {
 
     const cp = enc.beginComputePass();
     cp.setPipeline(advectPipe); cp.setBindGroup(0, advectBind);
-    cp.dispatchWorkgroups(Math.ceil(activeN / 64)); cp.end();
+    cp.dispatchWorkgroups(Math.ceil(activeN / 256)); cp.end();
 
     // fade the old trails, add this frame's particles on top
     const rp = enc.beginRenderPass({ colorAttachments: [{ view: screens[nxt].createView(), clearValue: { r: 0, g: 0, b: 0, a: 1 }, loadOp: "clear", storeOp: "store" }] });
