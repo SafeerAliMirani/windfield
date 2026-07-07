@@ -45,7 +45,9 @@ You need a WebGPU browser, so desktop Chrome or Edge.
 
 ## Author
 
-Built by Safeer Ali Mirani ([GitHub](https://github.com/SafeerAliMirani)).
+Built by **Dr. Safeer Ali Mirani**, GPU / XR / real-time visualisation engineer (PhD).
+
+[safeer.ali.mirani@gmail.com](mailto:safeer.ali.mirani@gmail.com) · [Portfolio](https://safeeralimirani.netlify.app) · [GitHub](https://github.com/SafeerAliMirani) · [LinkedIn](https://www.linkedin.com/in/safeeralimirani)
 
 ## License
 
