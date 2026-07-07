@@ -1,0 +1,11 @@
+# Netlify config for Aeolus, a static site with no build step. The baked wind
+# field lives in web/data/ (committed); the app loads it same-origin.
+
+[build]
+  publish = "web"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

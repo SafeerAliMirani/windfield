@@ -1,0 +1,7 @@
+web/data/*.grib*
+web/data/*.grb*
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,10 @@
+{
+  "width": 360,
+  "height": 180,
+  "uMin": -28.219985961914062,
+  "uMax": 31.32236099243164,
+  "vMin": -33.069149017333984,
+  "vMax": 30.55436897277832,
+  "source": "NOAA GFS 0.25deg 10 m wind (public domain)",
+  "forecastTime": "20260707 06Z"
+}

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Windfield: a million particles on real NOAA wind (WebGPU)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#EAF3FB; --ink2:#A9BDD1; --ink3:#64798E;
+    --accent:#46D7FF; --accent-soft:rgba(70,215,255,.35);
+    --panel:rgba(8,15,26,.68); --edge:rgba(105,190,255,.14);
+    --track:rgba(234,243,251,.13);
+    --mono:"IBM Plex Mono","Cascadia Mono","SF Mono",Consolas,ui-monospace,monospace;
+    color-scheme:dark;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; overflow:hidden; background:#05070e; color:var(--ink); font-family:var(--mono); }
+  #gpu{ position:fixed; inset:0; width:100vw; height:100vh; display:block; }
+
+  #labels{ position:fixed; inset:0; z-index:3; pointer-events:none; overflow:hidden; }
+  #labels span{ position:absolute; transform:translate(-50%,-50%); color:#e6eeff; font-size:11px; letter-spacing:.2px;
+                white-space:nowrap; text-shadow:0 1px 3px #000, 0 0 2px #000; }
+  #labels span::before{ content:""; display:inline-block; width:4px; height:4px; margin-right:4px; border-radius:50%;
+                        background:#bcd4ff; box-shadow:0 0 3px rgba(0,0,0,.8); vertical-align:middle; }
+
+  .hud{ position:fixed; z-index:10; font-family:var(--mono); user-select:none; -webkit-user-select:none; }
+  .tl{ top:20px; left:20px; width:260px; }
+  .bl{ bottom:20px; left:20px; width:260px; }
+  .tr{ top:20px; right:20px; }
+  h1{ margin:0; font:600 15px var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--ink);
+      text-shadow:0 1px 8px rgba(4,7,12,.8); pointer-events:none; }
+  .tag{ margin:4px 0 12px; font-size:11px; color:var(--ink2); text-shadow:0 1px 6px rgba(4,7,12,.8); pointer-events:none; }
+  .panel{ padding:13px 16px 12px; border-radius:10px; background:var(--panel); border:1px solid var(--edge);
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 10px 30px rgba(0,0,0,.35);
+          backdrop-filter:blur(14px) saturate(130%); -webkit-backdrop-filter:blur(14px) saturate(130%); }
+  .panel hr{ border:0; height:1px; margin:10px -16px; background:rgba(255,255,255,.055); }
+  .row{ display:flex; justify-content:space-between; align-items:baseline; padding:2.5px 0; }
+  .k{ font-size:9.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--ink3); }
+  .v{ font-size:11.5px; font-weight:500; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .legend{ height:6px; margin-top:6px; border-radius:3px;
+           background:linear-gradient(90deg, #080F29, #008CA8 50%, #FACC52 80%, #FFFFFF); }
+  .ticks{ display:flex; justify-content:space-between; margin-top:4px; font-size:9px; color:var(--ink3); }
+  .ticks span::before{ content:""; display:block; width:1px; height:3px; margin:0 auto 2px; background:rgba(100,121,142,.7); }
+  .foot{ font-size:10px; letter-spacing:.02em; color:var(--ink3); }
+
+  .ctl{ margin:2px 0 10px; }
+  .ctl:last-of-type{ margin-bottom:2px; }
+  .ctl .top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .ctl label{ font-size:9.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); }
+  .ctl output{ font-size:11.5px; font-weight:500; color:var(--accent); font-variant-numeric:tabular-nums; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; display:block; width:100%; height:16px; margin:0;
+                     background:transparent; cursor:ew-resize; }
+  input[type=range]::-webkit-slider-runnable-track{ height:3px; border-radius:2px;
+    background:linear-gradient(90deg, var(--accent) var(--fill,50%), var(--track) var(--fill,50%)); }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:5px; height:15px; margin-top:-6px; border-radius:2px;
+    background:#EAF6FF; box-shadow:0 0 0 1px rgba(4,7,12,.6); transition:box-shadow .12s ease-out; }
+  input[type=range]:hover::-webkit-slider-thumb, input[type=range]:focus-visible::-webkit-slider-thumb{
+    box-shadow:0 0 0 1px rgba(4,7,12,.6), 0 0 10px var(--accent-soft); }
+  input[type=range]::-moz-range-track{ height:3px; border-radius:2px; background:var(--track); }
+  input[type=range]::-moz-range-progress{ height:3px; border-radius:2px; background:var(--accent); }
+  input[type=range]::-moz-range-thumb{ width:5px; height:15px; border:0; border-radius:2px; background:#EAF6FF; }
+  input[type=range]:focus-visible{ outline:1px solid var(--accent); outline-offset:3px; border-radius:2px; }
+
+  .hint{ position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:10; padding:6px 12px; border-radius:8px;
+         background:rgba(8,15,26,.6); border:1px solid rgba(105,190,255,.10); font:400 10.5px var(--mono);
+         color:var(--ink3); transition:opacity .4s; pointer-events:none; }
+  .chip{ padding:6px 10px; border-radius:8px; background:var(--panel); border:1px solid var(--edge); font-size:10.5px;
+         font-weight:500; letter-spacing:.06em; color:var(--ink2); text-decoration:none;
+         backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+  .chip:hover{ color:var(--ink); border-color:rgba(105,190,255,.3); }
+  .topright{ position:fixed; top:20px; right:20px; z-index:10; display:flex; gap:8px; }
+  button.chip{ font-family:var(--mono); cursor:pointer; }
+  .about{ position:fixed; inset:0; z-index:15; display:none; place-items:center; padding:20px;
+          background:rgba(3,6,12,.55); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+  .about.open{ display:grid; }
+  .about .sheet{ position:relative; width:min(460px,94vw); max-height:82vh; overflow:auto; padding:18px 20px;
+                 background:var(--panel); border:1px solid var(--edge); border-radius:12px;
+                 box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 20px 60px rgba(0,0,0,.5);
+                 -webkit-backdrop-filter:blur(16px) saturate(130%); backdrop-filter:blur(16px) saturate(130%); }
+  .about .ahead{ display:flex; justify-content:space-between; align-items:center; }
+  .about h2{ font:600 13px var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--ink); }
+  .about .x{ background:none; border:0; color:var(--ink3); font-size:18px; line-height:1; cursor:pointer; }
+  .about .x:hover{ color:var(--ink); }
+  .about .lede{ margin-top:6px; font-size:12px; color:var(--ink); line-height:1.5; }
+  .about section{ margin-top:14px; }
+  .about .h{ font-size:9.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+  .about p{ font-size:11.5px; line-height:1.6; color:var(--ink2); }
+  .about .links{ margin-top:18px; display:flex; gap:16px; flex-wrap:wrap; font-size:11px; }
+  .about a{ color:var(--accent); text-decoration:none; }
+  .about a:hover{ text-decoration:underline; }
+
+  .overlay{ position:fixed; inset:0; display:grid; place-items:center; z-index:20;
+            background:radial-gradient(1000px 700px at 50% 40%, #0b1428, #05070e); font-size:12px; color:var(--ink2); }
+  .overlay.hidden{ display:none; }
+  .card{ background:var(--panel); border:1px solid var(--edge); border-radius:10px; padding:12px 14px; max-width:360px; }
+  code{ color:var(--accent); }
+  @media (max-width:720px){ .tl,.bl{ width:232px; } .tag,.hint{ display:none; } }
+</style>
+</head>
+<body>
+  <canvas id="gpu"></canvas>
+  <div id="labels"></div>
+
+  <header class="hud tl">
+    <h1>Windfield</h1>
+    <p class="tag">a million particles, one real NOAA wind snapshot</p>
+    <section class="panel" aria-label="data">
+      <div class="row"><span class="k">Source</span><span class="v">NOAA GFS &middot; 10 m wind</span></div>
+      <div class="row"><span class="k">Valid</span><span class="v" id="valid">reading forecast</span></div>
+      <div class="row"><span class="k">Particles</span><span class="v" id="count">1,048,576</span></div>
+      <div class="row"><span class="k">Render</span><span class="v"><span id="fps">--</span> fps</span></div>
+      <hr>
+      <div class="k">Wind speed &middot; m/s</div>
+      <div class="legend" role="img" aria-label="color scale from calm to fast"></div>
+      <div class="ticks"><span>0</span><span>10</span><span>20+</span></div>
+      <hr>
+      <p class="foot">one fixed forecast hour &middot; not a live feed</p>
+    </section>
+  </header>
+
+  <section class="panel hud bl" aria-label="controls">
+    <div class="ctl"><div class="top"><label for="c-n">Particles</label><output id="o-n">1.0M</output></div>
+      <input id="c-n" type="range" min="18" max="22" step="1" value="20"></div>
+    <div class="ctl"><div class="top"><label for="c-f">Flow</label><output id="o-f">1.0&times;</output></div>
+      <input id="c-f" type="range" min="0.25" max="4" step="0.05" value="1"></div>
+    <div class="ctl"><div class="top"><label for="c-t">Trails</label><output id="o-t">60%</output></div>
+      <input id="c-t" type="range" min="0" max="100" step="1" value="60"></div>
+  </section>
+
+  <div class="hint" id="hint">drag to pan &middot; scroll to zoom</div>
+
+  <div class="topright">
+    <button class="chip" id="aboutBtn" type="button">About</button>
+    <a class="chip" id="ghlink" href="https://github.com/SafeerAliMirani/windfield" target="_blank" rel="noopener">GitHub &#8599;</a>
+  </div>
+
+  <div class="about" id="about">
+    <div class="sheet">
+      <div class="ahead"><h2>Windfield</h2><button class="x" id="aboutClose" type="button" aria-label="close">&times;</button></div>
+      <p class="lede">About a million particles pushed through one real hour of NOAA wind, in the browser with WebGPU.</p>
+      <section>
+        <div class="h">Data</div>
+        <p>NOAA GFS, the US National Weather Service global forecast. One 6-hourly cycle of 10 m wind, the eastward and northward components, regridded to 360 by 180. Public domain. The exact forecast time is in the panel.</p>
+      </section>
+      <section>
+        <div class="h">Pipeline</div>
+        <p>A short Python script pulls a GRIB2 subset from NOAA NOMADS, packs u into the red channel and v into green of one small PNG, and stores the value ranges and cycle time next to it.</p>
+      </section>
+      <section>
+        <div class="h">Coastlines</div>
+        <p>Natural Earth 1:110m coastline, also public domain, so you can tell where you are.</p>
+      </section>
+      <section>
+        <div class="h">Render</div>
+        <p>Particle positions live in a GPU buffer. A hand-written WGSL compute shader samples the wind under each particle and steps it forward, respawning strays so the field stays even. Trails build up in a floating-point buffer that fades each frame, then a tonemap keeps the fastest winds from clipping to white.</p>
+      </section>
+      <section>
+        <div class="h">Not live</div>
+        <p>This is one fixed forecast hour, not a live feed. Re-running the script refreshes it to the latest cycle.</p>
+      </section>
+      <div class="links">
+        <a href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" target="_blank" rel="noopener">NOAA GFS</a>
+        <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>
+        <a href="https://github.com/SafeerAliMirani/windfield" target="_blank" rel="noopener">Source</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading" class="overlay"><div id="loading-text">starting</div></div>
+  <div id="nogpu" class="overlay hidden"><div class="card">This demo needs <b>WebGPU</b>. <span id="nogpu-msg"></span></div></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
