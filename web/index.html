@@ -135,7 +135,7 @@
   </section>
 
   <div class="hint" id="hint">drag to pan &middot; scroll to zoom</div>
-  <div class="credit">Built by <a href="https://safeeralimirani.netlify.app" target="_blank" rel="noopener">Safeer Ali Mirani</a> &middot; <a href="mailto:safeer.ali.mirani@gmail.com">Email</a> &middot; <a href="https://github.com/SafeerAliMirani" target="_blank" rel="noopener">GitHub</a> &middot; <a href="https://www.linkedin.com/in/safeeralimirani" target="_blank" rel="noopener">LinkedIn</a></div>
+  <div class="credit">Built by <a href="https://safeeralimirani.pages.dev" target="_blank" rel="noopener">Safeer Ali Mirani</a> &middot; <a href="mailto:safeer.ali.mirani@gmail.com">Email</a> &middot; <a href="https://github.com/SafeerAliMirani" target="_blank" rel="noopener">GitHub</a> &middot; <a href="https://www.linkedin.com/in/safeeralimirani" target="_blank" rel="noopener">LinkedIn</a></div>
 
   <div class="topright">
     <button class="chip" id="aboutBtn" type="button">About</button>
@@ -178,6 +178,21 @@
   <div id="nogpu" class="overlay hidden"><div class="card">This demo needs <b>WebGPU</b>. <span id="nogpu-msg"></span></div></div>
 
   <script type="module" src="js/main.js"></script>
-<!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "1c2ac3cbd24d45f183538c49a64b381b"}'></script><!-- End Cloudflare Web Analytics -->
+<script defer>
+(function(){
+  var E='https://safeer-analytics.safeer-ali-mirani.workers.dev/collect';
+  function send(t,l){try{var b=JSON.stringify({type:t,label:l||null,path:location.pathname,referrer:document.referrer||null});
+    if(navigator.sendBeacon)navigator.sendBeacon(E,new Blob([b],{type:'application/json'}));
+    else fetch(E,{method:'POST',body:b,headers:{'Content-Type':'application/json'},keepalive:true});}catch(_){ }}
+  send('pageview');
+  document.addEventListener('click',function(e){
+    var a=e.target.closest?e.target.closest('a'):null; if(!a)return;
+    var h=a.getAttribute('href')||'';
+    if(a.hasAttribute('download')||/\.pdf(\?|$)/i.test(h))return send('cv_download','CV');
+    if(h.indexOf('mailto:')===0)return send('contact_click','email');
+    if(/github\.com|linkedin\.com|orcid\.org|scholar\.google/.test(h))return send('source_click',(h.match(/https?:\/\/([^\/]+)/)||[])[1]||'link');
+  },true);
+})();
+</script>
 </body>
 </html>

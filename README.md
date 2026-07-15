@@ -4,7 +4,7 @@
 
 **A million particles, one real NOAA wind snapshot, drawn on your GPU.**
 
-[![Live demo](https://img.shields.io/badge/live-windfield.netlify.app-46D7FF?style=for-the-badge)](https://windfield.netlify.app)
+[![Live demo](https://img.shields.io/badge/live-windfield.pages.dev-46D7FF?style=for-the-badge)](https://windfield.pages.dev)
 &nbsp;
 ![WebGPU](https://img.shields.io/badge/WebGPU-raw%20WGSL-1f6feb?style=for-the-badge)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-2ea043?style=for-the-badge)
@@ -47,7 +47,7 @@ You need a WebGPU browser, so desktop Chrome or Edge.
 
 Built by **Dr. Safeer Ali Mirani**, GPU / XR / real-time visualisation engineer (PhD).
 
-[safeer.ali.mirani@gmail.com](mailto:safeer.ali.mirani@gmail.com) · [Portfolio](https://safeeralimirani.netlify.app) · [GitHub](https://github.com/SafeerAliMirani) · [LinkedIn](https://www.linkedin.com/in/safeeralimirani)
+[safeer.ali.mirani@gmail.com](mailto:safeer.ali.mirani@gmail.com) · [Portfolio](https://safeeralimirani.pages.dev) · [GitHub](https://github.com/SafeerAliMirani) · [LinkedIn](https://www.linkedin.com/in/safeeralimirani)
 
 ## License
 
