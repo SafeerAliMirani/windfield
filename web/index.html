@@ -182,8 +182,11 @@
 (function(){
   var E='https://safeer-analytics.safeer-ali-mirani.workers.dev/collect';
   function send(t,l){try{var b=JSON.stringify({type:t,label:l||null,path:location.pathname,referrer:document.referrer||null});
-    if(navigator.sendBeacon)navigator.sendBeacon(E,new Blob([b],{type:'application/json'}));
-    else fetch(E,{method:'POST',body:b,headers:{'Content-Type':'application/json'},keepalive:true});}catch(_){ }}
+    /* text/plain is REQUIRED: application/json is not CORS-safelisted, so the browser
+       needs a preflight, drops the beacon SILENTLY, and sendBeacon still returns true.
+       The Worker parses the body as JSON regardless of the declared type. */
+    if(navigator.sendBeacon)navigator.sendBeacon(E,new Blob([b],{type:'text/plain;charset=UTF-8'}));
+    else fetch(E,{method:'POST',body:b,headers:{'Content-Type':'text/plain;charset=UTF-8'},keepalive:true});}catch(_){ }}
   send('pageview');
   document.addEventListener('click',function(e){
     var a=e.target.closest?e.target.closest('a'):null; if(!a)return;
@@ -194,5 +197,43 @@
   },true);
 })();
 </script>
+<!-- tour: steps for this page, then the shared engine -->
+<script>
+window.TOUR_STEPS = [
+  {
+    "sel": "header.hud",
+    "title": "What you are looking at",
+    "body": "One real wind snapshot from the NOAA global forecast, with a million particles let loose in it. Each particle just follows the wind where it is, and the pattern you see is the weather."
+  },
+  {
+    "sel": "#c-n",
+    "title": "A million particles, or fewer",
+    "body": "Every particle is moved by the GPU each frame. Drag this down if your machine is struggling, up to make the flow denser."
+  },
+  {
+    "sel": "#c-f",
+    "title": "How fast the wind runs",
+    "body": "Speeds the whole field up or slows it down. The shape stays true, only the clock changes."
+  },
+  {
+    "sel": "#c-t",
+    "title": "How long the trails last",
+    "body": "Low is a swarm of dots. High leaves long streaks that show where the air has been."
+  },
+  {
+    "sel": "#hint",
+    "title": "Moving around",
+    "body": "Drag to pan, scroll to zoom in on a storm."
+  },
+  {
+    "sel": "#aboutBtn",
+    "title": "Where it all comes from",
+    "body": "The forecast, the licence, and who built this."
+  }
+];
+window.TOUR_OPTIONS = { readySel: "header.hud" };
+</script>
+<script src="tour.js"></script>
+<!-- /tour -->
 </body>
 </html>
